@@ -5,13 +5,22 @@ using ProvaPub.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<RandomService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<TempoProviderPadrao>();
+builder.Services.AddScoped<RandomService>();
+builder.Services.AddScoped<ITempoProvider, TempoProviderPadrao>();
+builder.Services.AddScoped<PagadorPix>();
+builder.Services.AddScoped<PagadorCartao>();
+builder.Services.AddScoped<PagadorPaypal>();
+builder.Services.AddScoped<IPagamentoTipo, PagadorPix>();
+builder.Services.AddScoped<IPagamentoTipo, PagadorCartao>();
+builder.Services.AddScoped<IPagamentoTipo, PagadorPaypal>();
+builder.Services.AddScoped<OrderService>();
 builder.Services.AddDbContext<TestDbContext>(options =>
 	options.UseSqlServer(builder.Configuration.GetConnectionString("ctx")));
 var app = builder.Build();

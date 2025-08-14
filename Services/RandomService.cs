@@ -4,26 +4,44 @@ using ProvaPub.Repository;
 
 namespace ProvaPub.Services
 {
-	public class RandomService
-	{
-		int seed;
-        TestDbContext _ctx;
-		public RandomService()
+    public class RandomService
+    {
+        private readonly TestDbContext _ctx;
+        private readonly Random _random;
+
+        public RandomService(TestDbContext ctx)
         {
-            var contextOptions = new DbContextOptionsBuilder<TestDbContext>()
-    .UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=Teste;Trusted_Connection=True;")
-    .Options;
-            seed = Guid.NewGuid().GetHashCode();
-
-            _ctx = new TestDbContext(contextOptions);
+            _ctx = ctx;
+            _random = new Random(); // Sem semente fixa
         }
-        public async Task<int> GetRandom()
-		{
-            var number =  new Random(seed).Next(100);
-            _ctx.Numbers.Add(new RandomNumber() { Number = number });
-            _ctx.SaveChanges();
-			return number;
-		}
 
-	}
+        public async Task<int> GetRandom()
+        {
+            int number;
+            bool saved = false;
+
+            do
+            {
+                number = _random.Next(0, 100);
+
+                // Verifica se já existe no banco
+                if (!await _ctx.Numbers.AnyAsync(n => n.Number == number))
+                {
+                    _ctx.Numbers.Add(new RandomNumber() { Number = number });
+                    try
+                    {
+                        await _ctx.SaveChangesAsync();
+                        saved = true;
+                    }
+                    catch (DbUpdateException)
+                    {
+                        // Em caso de erro de duplicidade, tenta novamente
+                        saved = false;
+                    }
+                }
+            } while (!saved);
+
+            return number;
+        }
+    }
 }

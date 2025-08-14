@@ -3,19 +3,24 @@ using ProvaPub.Repository;
 
 namespace ProvaPub.Services
 {
-	public class ProductService
-	{
-		TestDbContext _ctx;
+    public class ProductService
+    {
+        private readonly TestDbContext _db;
+        public ProductService(TestDbContext db)
+        {
+            _db = db;
+        }
 
-		public ProductService(TestDbContext ctx)
-		{
-			_ctx = ctx;
-		}
+        public ProductList BuscarProdutosPaginados(int pagina)
+        {
+            var (itens, total, proxima) = UtilService.Paginar(_db.Products.OrderBy(x => x.Id), pagina, 10);
 
-		public ProductList  ListProducts(int page)
-		{
-			return new ProductList() {  HasNext=false, TotalCount =10, Products = _ctx.Products.ToList() };
-		}
-
-	}
+            return new ProductList
+            {
+                Products = itens.ToList(),
+                TotalCount = total,
+                HasNext = proxima
+            };
+        }
+    }
 }
